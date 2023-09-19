@@ -24,6 +24,7 @@ extern "C" {
 /** Includes **/
 #include "common.h"
 #include "transport_drv.h"
+#include "stdbool.h"
 
 /** constants/macros **/
 
@@ -44,6 +45,7 @@ extern "C" {
 /** Inline functions **/
 
 /** Exported Functions **/
+bool check_transaction_task(void);
 
 #ifdef __cplusplus
 }

@@ -235,21 +235,6 @@ void lwip_startup(uint8_t mac_address[6]) {
 
 	/* Start DHCP negotiation for a network interface (IPv4) */
 	dhcp_start(&gnetif);
-
-	/* wait IP address */
-	while (gnetif.ip_addr.addr == 0) {
-		osDelay(1000);
-	}
-	char iptxt[32];
-	sprintf((char*)iptxt,
-			"IP: %d.%d.%d.%d",
-			(uint8_t)(gnetif.ip_addr.addr),
-			(uint8_t)((gnetif.ip_addr.addr) >> 8),
-			(uint8_t)((gnetif.ip_addr.addr) >> 16),
-			(uint8_t)((gnetif.ip_addr.addr) >> 24));
-	printf("%s\n\r", iptxt);
-
-	httpd_init();
 }
 #endif
 
@@ -261,6 +246,6 @@ void lwip_example_app_platform_assert(const char *msg, int line,
 	abort();
 }
 
-unsigned int lwip_port_rand(void) {
-	return (u32_t) rand();
-}
+//unsigned int lwip_port_rand(void) {
+//	return (u32_t) rand();
+//}

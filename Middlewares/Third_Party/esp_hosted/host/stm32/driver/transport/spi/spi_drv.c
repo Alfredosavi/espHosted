@@ -700,6 +700,12 @@ done:
   return STM_FAIL;
 }
 
+bool teste = false; // FIXME: Teste
+bool check_transaction_task(void)
+{
+	return teste;
+}
+
 /**
  * @brief  Task for SPI transaction
  * @param  argument: Not used
@@ -730,6 +736,7 @@ static void transaction_task(void const *pvParameters)
       if (osSemaphoreWait(osSemaphore, osWaitForever) == osOK)
       {
         check_and_execute_spi_transaction();
+        teste = true;
       }
     }
   }
