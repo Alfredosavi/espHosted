@@ -41,6 +41,10 @@
 #define NOT_CONNECTED_STR                    "not_connected"
 
 /*---- Control structures ----*/
+enum{
+	SSID_BE_BROADCASTED = 0,
+	SSID_NOT_BE_BROADCASTED = 1
+};
 
 enum {
 	CTRL_ERR_NOT_CONNECTED = 1,

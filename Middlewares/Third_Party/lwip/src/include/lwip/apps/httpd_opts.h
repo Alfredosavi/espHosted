@@ -62,7 +62,7 @@
  * does not depend on the CGI parameters.
  */
 #if !defined LWIP_HTTPD_CGI || defined __DOXYGEN__
-#define LWIP_HTTPD_CGI            0
+#define LWIP_HTTPD_CGI            1
 #endif
 
 /** Set this to 1 to support CGI (new style).
@@ -98,7 +98,7 @@
  * can be used.
  */
 #if !defined LWIP_HTTPD_SSI || defined __DOXYGEN__
-#define LWIP_HTTPD_SSI            0
+#define LWIP_HTTPD_SSI            1
 #endif
 
 /** Set this to 1 to implement an SSI tag handler callback that gets a const char*

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="5;url=/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sucesso</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <main>
+            <h1>Configuração realizada com sucesso.</h1>
+            <p>Aguarde, você será redirecionado para a home page em <span id="countdown">5</span> segundos.</p>
+            <p>Se não for redirecionado, <a href="/">clique aqui</a>.</p>
+        </main>
+    </div>
+    <script>
+      function updateCountdown(seconds) {
+          document.getElementById('countdown').textContent = seconds;
+          if (seconds > 0) {
+              setTimeout(function() {
+                  updateCountdown(seconds - 1);
+              }, 1000);
+          }
+      }
+      window.onload = function() {
+          updateCountdown(5);
+      };
+  </script>
+</body>
+</html>

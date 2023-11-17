@@ -31,13 +31,20 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
+#include "mod_persist.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern SPI_HandleTypeDef hspi2;
 extern UART_HandleTypeDef huart1;
+
+typedef struct{
+	uint8_t	ssid_ap[32];
+	uint8_t ssid_sta[32];
+	bool 	ap_ssid_is_hidden;
+}hs_ssi_parameters_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -54,7 +61,8 @@ extern UART_HandleTypeDef huart1;
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void get_data_ssi(hs_ssi_parameters_t *context);
+void set_data_cgi(persist_payload_t * context, uint8_t typeUpdate);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

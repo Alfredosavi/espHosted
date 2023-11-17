@@ -1,3 +1,10 @@
+/*
+ * teste_startup.c
+ *
+ *  Created on: Oct 10, 2023
+ *      Author: Alfredo Savi
+ */
+
 #include "lwip_startup.h"
 
 #include "lwip/init.h"
@@ -19,104 +26,57 @@
 #include "app_main.h"
 #include "httpd.h"
 
-struct netif gnetif;
+
+
+struct netif gnetif_station;
+struct netif gnetif_ap;
+
 ip4_addr_t ipaddr;
 ip4_addr_t netmask;
 ip4_addr_t gw;
 
-ip4_addr_t * get_ip_address(){
-	return netif_ip4_addr(&gnetif);
+
+
+ip4_addr_t *get_ip_station_address()
+{
+	return netif_ip4_addr(&gnetif_station);
 }
 
-err_t ethernetif_init_low(struct netif *netif) {
+
+err_t ethernetif_init_low(struct netif *netif)
+{
 	//lwip init wifi phy
 	return 0;
 }
 
+
 #if (MAIN_APP_CODE == LWIP_DEMO)
 struct network_handle *sta_handle, *ap_handle;
 
-//
-//
-//typedef struct my_custom_pbuf
-//{
-//   struct pbuf_custom p;
-//   void* dma_descriptor;
-//} my_custom_pbuf_t;
-//
-//LWIP_MEMPOOL_DECLARE(RX_POOL, 10, sizeof(my_custom_pbuf_t), "Zero-copy RX PBUF pool");
-//
-//void free_rx_dma_descriptor(void * receive_buffer){
-//	struct esp_pbuf *rx_buffer = receive_buffer;
-//	free(rx_buffer->payload);
-//			rx_buffer->payload = NULL;
-//			free(rx_buffer);
-//			rx_buffer = NULL;
-//}
-//
-//void my_pbuf_free_custom(void* p)
-//{
-//  my_custom_pbuf_t* my_pbuf = (my_custom_pbuf_t*)p;
-////  LOCK_INTERRUPTS();
-//  free_rx_dma_descriptor(my_pbuf->dma_descriptor);
-//  LWIP_MEMPOOL_FREE(RX_POOL, my_pbuf);
-////  UNLOCK_INTERRUPTS();
-//}
 
-static void sta_rx_callback(struct network_handle *net_handle) {
+static void sta_rx_callback(struct network_handle *net_handle)
+{
 	struct esp_pbuf *rx_buffer = NULL;
-
-	//uint8_t *arp_resp = NULL;
-	//uint16_t arp_resp_len = 0;
-	//uint32_t sta_ip = 0;
 
 	rx_buffer = network_read(net_handle, 0);
 
 	if (rx_buffer) {
-//		dma_descriptor*   dma_desc = get_RX_DMA_descriptor_from_ethernet();
-//		  my_custom_pbuf_t* my_pbuf  = (my_custom_pbuf_t*)LWIP_MEMPOOL_ALLOC(RX_POOL);
-//		  my_pbuf->p.custom_free_function = my_pbuf_free_custom;
-//		  my_pbuf->dma_descriptor         = rx_buffer;
-//		  invalidate_cpu_cache(dma_desc->rx_data, dma_desc->rx_length);
-
-//		  struct pbuf* p = pbuf_alloced_custom(PBUF_RAW,
-//				  rx_buffer->len,
-//		     PBUF_REF,
-//		     &my_pbuf->p,
-//			 rx_buffer->payload,
-//			 MAX_SPI_BUFFER_SIZE);
 		struct pbuf *p = pbuf_alloc(PBUF_RAW, rx_buffer->len, PBUF_POOL);
 //		  memcpy(p->payload, rx_buffer->payload, rx_buffer->len);
+
 		struct pbuf *q;
 		uint32_t l = 0;
-		if (p != NULL) {
-			for (q = p; q != NULL; q = q->next) {
+
+		if(p != NULL){
+			for(q=p; q != NULL; q=q->next){
 				memcpy(q->payload, &rx_buffer->payload[l], q->len);
 				l = l + q->len;
 			}
 		}
 
-		if (gnetif.input(p, &gnetif) != ERR_OK) {
+		if(gnetif_station.input(p, &gnetif_station) != ERR_OK)
 			pbuf_free(p);
-		}
 
-//		//send to lwip interface
-//		struct pbuf * p = pbuf_alloced_custom(PBUF_RAW, rx_buffer->len, PBUF_REF, rx_buffer->payload, )
-//		struct pbuf* p = pbuf_alloc(PBUF_RAW, rx_buffer->len, PBUF_POOL);
-//
-//		if (p != NULL) {
-//			memcpy(p->payload, rx_buffer->payload, rx_buffer->len);
-//
-//			err_t err = gnetif.input(p, &gnetif);
-//			if (err != ERR_OK) {
-//				printf("error ingesting frame\r\n");
-//				pbuf_free(p);
-//			}
-//		}
-////		if (p) {
-////			pbuf_free(p);
-////		}
-//
 		free(rx_buffer->payload);
 		rx_buffer->payload = NULL;
 		free(rx_buffer);
@@ -124,70 +84,48 @@ static void sta_rx_callback(struct network_handle *net_handle) {
 	}
 }
 
-err_t myif_link_output(struct netif *netif, struct pbuf *p) {
 
+err_t myif_link_station_output(struct netif *netif, struct pbuf *p)
+{
 	struct pbuf *q;
 
-//
-//#if ETH_PAD_SIZE
-//	pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
-//#endif
+	int packet_size = 0;
+	for(q=p; q != NULL; q=q->next)
+		packet_size += q->len;
 
-	int packet_size= 0;
-	for (q = p; q != NULL; q = q->next) {
-			packet_size += q->len;
-	}
 
 	int buffer_offset = 0;
-
 	struct esp_pbuf *snd_buffer = NULL;
+
 	snd_buffer = malloc(sizeof(struct esp_pbuf));
 	assert(snd_buffer);
 
 	snd_buffer->payload = malloc(packet_size);
 	assert(snd_buffer->payload);
 
-	for (q = p; q != NULL; q = q->next) {
+	for(q=p; q != NULL; q=q->next){
 		memcpy(snd_buffer->payload + buffer_offset, q->payload, q->len);
 		buffer_offset += q->len;
 	}
 
+
 	snd_buffer->len = packet_size;
 //	printf("Sending %d bytes to station\r\n", snd_buffer->len);
 	int ret = network_write(sta_handle, snd_buffer);
-	if (ret) {
-		printf("%s: Failed to send packet\n\r", __func__);
-	}
-//
-//
-//	MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p->tot_len);
-//	if (((u8_t*) p->payload)[0] & 1) {
-//		/* broadcast or multicast packet*/
-//		MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
-//	} else {
-//		/* unicast packet */
-//		MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
-//	}
-//	/* increase ifoutdiscards or ifouterrors on error */
 
-//#if ETH_PAD_SIZE
-//	pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
-//#endif
+	if(ret)
+		printf("%s: Failed to send packet\n\r", __func__);
 
 	LINK_STATS_INC(link.xmit);
 
 	return ERR_OK;
-
 }
 
-//err_t myif_output(struct netif *netif, struct pbuf *p,
-//       const ip4_addr_t *ipaddr) {
-//
-//}
 
-void lwip_startup(uint8_t mac_address[6]) {
+void lwip_startup_station(uint8_t mac_address[6])
+{
 	/* Initialize the LwIP stack with RTOS */
-	tcpip_init( NULL, NULL);
+//	tcpip_init(NULL, NULL);
 
 //	LWIP_MEMPOOL_INIT(RX_POOL);
 
@@ -195,10 +133,10 @@ void lwip_startup(uint8_t mac_address[6]) {
 	assert(sta_handle);
 
 	/* set MAC hardware address length */
-	gnetif.hwaddr_len = ETHARP_HWADDR_LEN;
+	gnetif_station.hwaddr_len = ETHARP_HWADDR_LEN;
 
 	/* set MAC hardware address */
-	memcpy(gnetif.hwaddr, mac_address, NETIF_MAX_HWADDR_LEN);
+	memcpy(gnetif_station.hwaddr, mac_address, NETIF_MAX_HWADDR_LEN);
 
 	/* IP addresses initialization with DHCP (IPv4) */
 	ip4_addr_set_zero(&ipaddr);
@@ -206,37 +144,39 @@ void lwip_startup(uint8_t mac_address[6]) {
 	ip4_addr_set_zero(&gw);
 
 	/* add the network interface (IPv4/IPv6) with RTOS */
-	netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, ethernetif_init_low,
-			tcpip_input);
-	gnetif.linkoutput = myif_link_output;
-//	gnetif.output = myif_output;
-	gnetif.output = etharp_output;
-	gnetif.hwaddr_len = 6;
-	gnetif.mtu = 1500;
-	gnetif.name[0] = 's';
-	gnetif.name[1] = 't';
-	gnetif.flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP
-			| NETIF_FLAG_LINK_UP;
+	netif_add(&gnetif_station, &ipaddr, &netmask, &gw, NULL,
+			ethernetif_init_low, tcpip_input);
+
+	gnetif_station.linkoutput = myif_link_station_output;
+//	gnetif_station.output = myif_output;
+	gnetif_station.output = etharp_output;
+	gnetif_station.hwaddr_len = 6;
+	gnetif_station.mtu = 1500;
+	gnetif_station.name[0] = 's';
+	gnetif_station.name[1] = 't';
+	gnetif_station.flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
+
 #if LWIP_NETIF_HOSTNAME
 	/* Initialize interface hostname */
-	gnetif->hostname = "lwip";
+	gnetif_station->hostname = "lwip";
 #endif /* LWIP_NETIF_HOSTNAME */
 
 	/* Registers the default network interface */
-	netif_set_default(&gnetif);
+	netif_set_default(&gnetif_station);
 
-	if (netif_is_link_up(&gnetif)) {
+	if(netif_is_link_up(&gnetif_station)){
 		/* When the netif is fully configured this function must be called */
-		netif_set_up(&gnetif);
-	} else {
+		netif_set_up(&gnetif_station);
+	}else{
 		/* When the netif link is down this function must be called */
-		netif_set_down(&gnetif);
+		netif_set_down(&gnetif_station);
 	}
 
 	/* Start DHCP negotiation for a network interface (IPv4) */
-	dhcp_start(&gnetif);
+	dhcp_start(&gnetif_station);
 }
-#endif
+
+
 
 void lwip_example_app_platform_assert(const char *msg, int line,
 		const char *file) {
@@ -246,6 +186,132 @@ void lwip_example_app_platform_assert(const char *msg, int line,
 	abort();
 }
 
-//unsigned int lwip_port_rand(void) {
-//	return (u32_t) rand();
-//}
+// ======================================================================================
+// ======================================================================================
+static void ap_rx_callback(struct network_handle *net_handle)
+{
+	struct esp_pbuf *rx_buffer = NULL;
+
+	rx_buffer = network_read(net_handle, 0);
+
+	if (rx_buffer) {
+		struct pbuf *p = pbuf_alloc(PBUF_RAW, rx_buffer->len, PBUF_POOL);
+//		  memcpy(p->payload, rx_buffer->payload, rx_buffer->len);
+
+		struct pbuf *q;
+		uint32_t l = 0;
+
+		if(p != NULL){
+			for(q=p; q != NULL; q=q->next){
+				memcpy(q->payload, &rx_buffer->payload[l], q->len);
+				l = l + q->len;
+			}
+		}
+
+		if(gnetif_ap.input(p, &gnetif_ap) != ERR_OK)
+			pbuf_free(p);
+
+		free(rx_buffer->payload);
+		rx_buffer->payload = NULL;
+		free(rx_buffer);
+		rx_buffer = NULL;
+	}
+}
+
+
+err_t myif_link_ap_output(struct netif *netif, struct pbuf *p)
+{
+	struct pbuf *q;
+
+	int packet_size = 0;
+	for(q=p; q != NULL; q=q->next)
+		packet_size += q->len;
+
+
+	int buffer_offset = 0;
+	struct esp_pbuf *snd_buffer = NULL;
+
+	snd_buffer = malloc(sizeof(struct esp_pbuf));
+	assert(snd_buffer);
+
+	snd_buffer->payload = malloc(packet_size);
+	assert(snd_buffer->payload);
+
+	for(q=p; q != NULL; q=q->next){
+		memcpy(snd_buffer->payload + buffer_offset, q->payload, q->len);
+		buffer_offset += q->len;
+	}
+
+
+	snd_buffer->len = packet_size;
+//	printf("Sending %d bytes to station\r\n", snd_buffer->len);
+	int ret = network_write(ap_handle, snd_buffer);
+
+	if(ret)
+		printf("%s: Failed to send packet\n\r", __func__);
+
+	LINK_STATS_INC(link.xmit);
+
+	return ERR_OK;
+}
+
+
+void lwip_startup_ap(uint8_t mac_address[6])
+{
+	/* Initialize the LwIP stack with RTOS */
+	tcpip_init(NULL, NULL);
+
+//	LWIP_MEMPOOL_INIT(RX_POOL);
+
+	ap_handle = network_open(SOFTAP_INTERFACE, ap_rx_callback);
+	assert(ap_handle);
+
+	/* set MAC hardware address length */
+	gnetif_ap.hwaddr_len = ETHARP_HWADDR_LEN;
+
+	/* set MAC hardware address */
+	memcpy(gnetif_ap.hwaddr, mac_address, NETIF_MAX_HWADDR_LEN);
+
+	/* IP addresses initialization with DHCP (IPv4) */
+//	ip4_addr_set_zero(&ipaddr);
+//	ip4_addr_set_zero(&netmask);
+//	ip4_addr_set_zero(&gw);
+
+	// TODO: IP DO AP FIXO
+	IP4_ADDR(&ipaddr, 192, 168, 2, 1);
+	IP4_ADDR(&netmask, 255, 255, 255, 0);
+	IP4_ADDR(&gw, 192, 168, 2, 1);
+
+
+	/* add the network interface (IPv4/IPv6) with RTOS */
+	netif_add(&gnetif_ap, &ipaddr, &netmask, &gw, NULL,
+			ethernetif_init_low, tcpip_input);
+
+	gnetif_ap.linkoutput = myif_link_ap_output;
+//	gnetif_ap.output = myif_output;
+	gnetif_ap.output = etharp_output;
+	gnetif_ap.hwaddr_len = 6;
+	gnetif_ap.mtu = 1500;
+	gnetif_ap.name[0] = 'a';
+	gnetif_ap.name[1] = 'p';
+	gnetif_ap.flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
+
+#if LWIP_NETIF_HOSTNAME
+	/* Initialize interface hostname */
+	gnetif_ap->hostname = "lwip";
+#endif /* LWIP_NETIF_HOSTNAME */
+
+	/* Registers the default network interface */
+	netif_set_default(&gnetif_ap);
+
+	if(netif_is_link_up(&gnetif_ap)){
+		/* When the netif is fully configured this function must be called */
+		netif_set_up(&gnetif_ap);
+	}else{
+		/* When the netif link is down this function must be called */
+		netif_set_down(&gnetif_ap);
+	}
+}
+// ======================================================================================
+// ======================================================================================
+#endif

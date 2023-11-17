@@ -22,7 +22,9 @@
 #include "trace.h"
 #include "ctrl_api.h"
 #include "platform_wrapper.h"
+#include "app_main.h"
 
+#if (MAIN_APP_CODE == ARPING_DEMO)
 /* Maximum retry count*/
 #define RETRY_COUNT							5
 
@@ -45,20 +47,25 @@
 #define DEFAULT_SOFTAP_CHANNEL              1
 #define DEFAULT_SOFTAP_MAX_CONNECTIONS      4
 #define DEFAULT_LISTEN_INTERVAL             3
+#endif
 
 /* data path opens after control path is set */
 static int mode = WIFI_MODE_NONE;
 static uint8_t self_station_mac[MAC_LEN] = { 0 };
 static uint8_t self_softap_mac[MAC_LEN]  = { 0 };
 
+#if (MAIN_APP_CODE == ARPING_DEMO)
 /** Exported variables **/
 static osThreadId control_path_task_id = 0;
+#endif
 
 static void (*control_path_evt_handler_fp) (uint8_t);
 
 /** Function Declarations **/
+#if (MAIN_APP_CODE == ARPING_DEMO)
 static void control_path_task(void const *argument);
 static int get_application_mode(void);
+#endif
 static void print_configuration_parameters(void);
 
 /** Exported functions **/
@@ -165,12 +172,14 @@ void control_path_init(void(*control_path_evt_handler)(uint8_t))
 	/* register event handler */
 	control_path_evt_handler_fp = control_path_evt_handler;
 
+#if (MAIN_APP_CODE == ARPING_DEMO)
 	/* Task - application task */
 	osThreadDef(SEM_Thread, control_path_task, osPriorityAboveNormal, 0,
 			CONTROL_PATH_TASK_STACK_SIZE);
 	control_path_task_id = osThreadCreate(osThread(SEM_Thread), NULL);
 	assert(control_path_task_id);
 	register_event_callbacks();
+#endif
 }
 
 /**
@@ -180,11 +189,14 @@ void control_path_init(void(*control_path_evt_handler)(uint8_t))
   */
 void control_path_deinit(void)
 {
+#if (MAIN_APP_CODE == ARPING_DEMO)
 	unregister_event_callbacks();
+#endif
 	/* Call control path library init */
 	control_path_platform_deinit();
 }
 
+#if (MAIN_APP_CODE == ARPING_DEMO)
 /** Local functions **/
 
 /**
@@ -282,8 +294,19 @@ static stm_ret_t save_station_mac(const char *mac)
   * @param  None
   * @retval None
   */
+#endif
+
+
 static void print_configuration_parameters(void)
 {
+#if (MAIN_APP_CODE != ARPING_DEMO)
+	printf("\n\r");
+	printf("+-----------------------------------+\n\r");
+	printf("        control_path_init UP\n\r");
+	printf("+-----------------------------------+\n\r");
+#endif
+
+	#if (MAIN_APP_CODE == ARPING_DEMO)
 	hard_delay(100);
 	printf("\n\r");
 	printf("+-----------------------------------+-------------------------------------------+\n\r");
@@ -313,8 +336,11 @@ static void print_configuration_parameters(void)
 	printf("|       INPUT_STATION_SRC_IP        |             %-30s|\n\r",INPUT_STATION_SRC_IP);
 	printf("|     INPUT_STATION_ARP_DEST_IP     |             %-30s|\n\r",INPUT_STATION_ARP_DEST_IP);
 	printf("+-----------------------------------+-------------------------------------------+\n\r");
+#endif
 }
 
+
+#if (MAIN_APP_CODE == ARPING_DEMO)
 /**
   * @brief  connect to wifi(ap) router
   * @param  None
@@ -610,3 +636,4 @@ static void control_path_task(void const *argument)
 		}
 	}
 }
+#endif

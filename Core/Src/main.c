@@ -24,11 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "mod_interface_wifi.h"
-
-// #include "app_main.h"
-// #include "lwip_startup.h"
-// #include "ctrl_api.h"
-// #include "util.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +52,7 @@ UART_HandleTypeDef huart1;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-
+persist_backup_t persist_backup = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,6 +69,28 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void get_data_ssi(hs_ssi_parameters_t *context)
+{
+	strcpy((char *)context->ssid_ap, (char *)persist_backup.payload.ap_conf.ssid);
+	strcpy((char *)context->ssid_sta, (char *)persist_backup.payload.st_conf.ssid);
+	context->ap_ssid_is_hidden = persist_backup.payload.ap_conf.ssid_hidden;
+}
+
+void set_data_cgi(persist_payload_t * context, uint8_t typeUpdate)
+{
+	if(typeUpdate == UPDATE_AP){
+		strcpy((char *)persist_backup.payload.ap_conf.ssid, (char *)context->ap_conf.ssid);
+		strcpy((char *)persist_backup.payload.ap_conf.pwd, (char *)context->ap_conf.pwd);
+		persist_backup.payload.ap_conf.ssid_hidden = context->ap_conf.ssid_hidden;
+
+		persist_backup.newUpdate |= UPDATE_AP;
+	}else if(typeUpdate == UPDATE_STA){
+		strcpy((char *)persist_backup.payload.st_conf.ssid, (char *)context->st_conf.ssid);
+		strcpy((char *)persist_backup.payload.st_conf.pwd, (char *)context->st_conf.pwd);
+
+		persist_backup.newUpdate |= UPDATE_STA;
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -129,7 +147,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 4 * 1024);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 8 * 1024); //TODO: ver
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -368,39 +386,20 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-  mod_interface_wifi_init();
-  //	hosted_initialize();
-  //
-  // #if (MAIN_APP_CODE == LWIP_DEMO)
-  //  // Wait the boot of the ESP32 network interface
-  //  osDelay(3000);
-  //  ctrl_cmd_t req;
-  //  req.msg_type = CTRL_REQ;
-  //  req.ctrl_resp_cb = NULL;
-  //  req.cmd_timeout_sec = DEFAULT_CTRL_RESP_TIMEOUT; /*30 sec*/
-  //  req.u.wifi_mac.mode = WIFI_MODE_AP;
-  //  ctrl_cmd_t *resp = NULL;
-  //
-  //  while(1){
-  //	  resp = wifi_get_mac(req);
-  //	  if (resp && resp->msg_id == CTRL_RESP_GET_MAC_ADDR) {
-  //		  break;
-  //	  }else {
-  //		  osDelay(10);
-  //	  }
-  //  }
-  //
-  //  uint8_t parsed_mac[6];
-  //  if (STM_OK == convert_mac_to_bytes(parsed_mac, resp->u.wifi_mac.mac)) {
-  //	  lwip_startup(parsed_mac);
-  //  }
-  // #endif
+	while(!mod_persist_init(&persist_backup));
+
+	mod_interface_wifi_init();
+
+
 
   /* Infinite loop */
   for (;;)
   {
-    mod_interface_wifi_run();
-    osDelay(1);
+//	  mod_persist_run(&persist_backup);
+	  mod_interface_wifi_run(&persist_backup);
+
+
+	  osDelay(1);
   }
   /* USER CODE END 5 */
 }

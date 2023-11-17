@@ -32,10 +32,6 @@
 #ifndef LWIP_LWIPOPTS_H
 #define LWIP_LWIPOPTS_H
 
-//#ifdef LWIP_OPTTEST_FILE
-//#include "lwipopts_test.h"
-//#else /* LWIP_OPTTEST_FILE */
-
 #define LWIP_IPV4                  1
 #define LWIP_IPV6                  0
 

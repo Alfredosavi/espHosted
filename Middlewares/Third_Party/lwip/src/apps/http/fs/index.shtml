@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      aside {
+        background-color: #333;
+        color: white;
+        padding: 20px;
+        flex: 1;
+      }
+
+      p {
+        margin-bottom: unset;
+        }
+
+      a {
+          color: unset;
+          text-decoration: unset;
+      }
+
+      a:hover {
+          text-decoration: unset;
+      }
+      
+      ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      li a {
+        display: block;
+        padding: 10px;
+        text-decoration: none;
+        color: white;
+        border-bottom: 1px solid #555;
+        transition: background-color 0.3s;
+      }
+
+      li a:hover {
+        background-color: #555;
+      }
+
+      form {
+        max-width: 100%;
+        margin: 0 auto;
+        margin-top: auto;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #458447;
+      }
+
+      .info-section {
+        background-color: #f4f4f4;
+        padding: 10px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+      }
+
+      .info-section h3 {
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <aside>
+        <h1>Menu</h1>
+        <ul>
+          <li><a href="#" onclick="showSection('status')">Status</a></li>
+          <li><a href="#" onclick="showSection('configuracao')">Configuração</a></li>
+        </ul>
+      </aside>
+
+      <main>
+        <section id="status">
+          <h2>Status</h2>
+          <div class="info-section" id="modoAP">
+            <h3>Modo AP</h3>
+            <p>SSID: <!--#ssid_ap--></p>
+            <p>Visibilidade: <!--#view_ap--></p>
+          </div>
+
+          <div class="info-section" id="modoSTA">
+            <h3>Modo STA</h3>
+            <p>SSID: <!--#ssid_sta--></p>
+            <p>Conectado?: <!--#conn_sta--></p>
+          </div>
+        </section>
+
+        <section id="configuracao" style="display: none;">
+          <h2>Configuração</h2>
+
+          <form method="get" action="/config_ap">
+            <div class="info-section" id="configModoAP">
+              <h3>Configuração do Modo AP</h3>
+              <label for="ssid_ap">SSID:</label>
+              <input type="text" id="ssid_ap" name="ssid_ap" pattern=".{0,32}" title="O campo não deve ultrapassar 32 caracteres.">
+              <label for="pwd_ap">Senha:</label>
+              <input type="text" id="pwd_ap" name="pwd_ap" pattern=".{8,63}" title="A senha deve ter entre 8 e 63 caracteres.">
+              <label for="show_ssid_ap">Visibilidade SSID:</label>
+              <select id="show_ssid_ap" name="show_ssid_ap">
+                <option value="0">Transmitir SSID</option>
+                <option value="1">Ocultar SSID</option>
+              </select>
+            </div>
+            <button type="submit">Salvar Configuração modo AP</button>
+          </form>
+
+          <form method="get" action="/config_sta">
+            <div class="info-section" id="configModoSTA">
+              <h3>Configuração do Modo STA</h3>
+              <label for="ssid_sta">SSID:</label>
+              <input type="text" id="ssid_sta" name="ssid_sta" pattern=".{0,32}" title="O campo não deve ultrapassar 32 caracteres.">
+              <label for="pwd_sta">Senha:</label>
+              <input type="text" id="pwd_sta" name="pwd_sta" pattern=".{8,63}" title="A senha deve ter entre 8 e 63 caracteres.">
+            </div>
+            <button type="submit">Salvar Configuração modo STA</button>
+          </form>
+
+        </section>
+      </main>
+    </div>
+    <script>
+      function showSection(sectionId) {
+        // Esconde todas as seções
+        document.getElementById('status').style.display = 'none';
+        document.getElementById('configuracao').style.display = 'none';
+        // Mostra apenas a seção desejada
+        document.getElementById(sectionId).style.display = 'block';
+      }
+    </script>
+  </body>
+</html>
